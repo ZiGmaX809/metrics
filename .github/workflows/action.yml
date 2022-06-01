@@ -16,23 +16,20 @@ jobs:
         with:
           file_name: metrics.classic.svg
           token: ${{ secrets.METRICS_TOKEN }}
-          base: header, repositories
-          config.timezone: Asia/Shanghai
           template: classic
+          base: header, repositories
+          base_indepth: false
+          config_timezone: Asia/Shanghai
           plugin_isocalendar: yes
-          plugin_isocalendar.duration: half-year
+          plugin_isocalendar_duration: half-year
           plugin_stars: yes
-          plugin_stars.limit: 4
+          plugin_stars_limit: 4
           plugin_followup: yes
-          plugin_followup.sections: repositories
-          plugin_followup.indepth: false
-          plugin_base.indepth: false
+          plugin_followup_sections: repositories
+          plugin_followup_indepth: false
           plugin_achievements: yes
-          plugin_achievements.threshold: C
-          plugin_achievements.secrets: true
-          plugin_achievements.display: compact
-          plugin_achievements.limit: 0
+          plugin_achievements_display: compact
           plugin_pagespeed: yes
-          plugin_pagespeed.url: https://www.zigma.cc
-          plugin_pagespeed.detailed: false
-          plugin_pagespeed.screenshot: false
+          plugin_pagespeed_url: https://www.zigma.cc
+          plugin_pagespeed_detailed: false
+          plugin_pagespeed_screenshot: false
