@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: zigmax809/metrics@latest
         with:
-          file_name: metrics.classic.svg
+          filename: metrics.classic.svg
           token: ${{ secrets.METRICS_TOKEN }}
           template: classic
           base: header, repositories
