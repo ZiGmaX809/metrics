@@ -14,4 +14,4 @@ jobs:
     steps:
       - uses: zigmax809/metrics@latest
         with:
-          token: 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
+          token: ${{ secrets.METRICS_TOKEN }}
