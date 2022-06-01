@@ -18,7 +18,6 @@ jobs:
           token: ${{ secrets.METRICS_TOKEN }}
           template: classic
           base: header, repositories
-          base_indepth: false
           config_timezone: Asia/Shanghai
           plugin_isocalendar: yes
           plugin_isocalendar_duration: half-year
@@ -26,10 +25,9 @@ jobs:
           plugin_stars_limit: 4
           plugin_followup: yes
           plugin_followup_sections: repositories
-          plugin_followup_indepth: false
           plugin_achievements: yes
           plugin_achievements_display: compact
           plugin_pagespeed: yes
           plugin_pagespeed_url: https://www.zigma.cc
-          plugin_pagespeed_detailed: false
-          plugin_pagespeed_screenshot: false
+          plugin_pagespeed_detailed: yes
+          plugin_pagespeed_token: ${{ secrets.PAGESPEED_TOKEN }}
