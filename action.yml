@@ -403,6 +403,10 @@ inputs:
     description: Trim unused hours on charts
     default: <default-value>
 
+  plugin_habits_languages_limit:
+    description: Limits the number of languages to be displayed
+    default: <default-value>
+
   # ====================================================================================
   # 🏅 Repository contributors
 
@@ -447,6 +451,10 @@ inputs:
 
   plugin_followup_indepth:
     description: Indepth analysis
+    default: <default-value>
+
+  plugin_followup_archived:
+    description: Include Issues and Pull requests on the archived repositories.
     default: <default-value>
 
   # ====================================================================================
@@ -744,6 +752,10 @@ inputs:
     description: List of featured repositories
     default: <default-value>
 
+  plugin_repositories_pinned:
+    description: Display pinned repositories
+    default: <default-value>
+
   # ====================================================================================
   # 🎫 Gists
 
@@ -871,6 +883,10 @@ inputs:
 
   plugin_pagespeed_token:
     description: PageSpeed token
+    default: <default-value>
+
+  plugin_pagespeed_pwa:
+    description: Display PWA Status
     default: <default-value>
 
   # ====================================================================================

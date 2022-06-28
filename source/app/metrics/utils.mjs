@@ -7,7 +7,6 @@ import { minify as csso } from "csso"
 import emoji from "emoji-name-map"
 import fss from "fs"
 import fs from "fs/promises"
-import GIFEncoder from "gifencoder"
 import jimp from "jimp"
 import linguist from "linguist-js"
 import { marked } from "marked"
@@ -331,7 +330,17 @@ export async function imgb64(image, {width, height, fallback = true} = {}) {
   if (!image)
     return fallback ? "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mOcOnfpfwAGfgLYttYINwAAAABJRU5ErkJggg==" : null
   //Load image
-  image = await jimp.read(image)
+  try {
+    //Fix: redirections are not properly supported by jimp (https://github.com/oliver-moran/jimp/issues/909), seems to occur only when in jest environment
+    if ((typeof image === "string") && (process.env.JEST_WORKER_ID)) {
+      image = (await axios.get(image)).then(response => response.request.responseURL).catch(() => null)
+      console.debug(`metrics/svg/imgb64 > redirected image link to ${image}`)
+    }
+    image = await jimp.read(image)
+  }
+  catch {
+    return null
+  }
   //Resize image
   if ((width) && (height))
     image = image.resize(width, height)
@@ -635,6 +644,7 @@ export async function gif({page, width, height, frames, x = 0, y = 0, repeat = t
   if (fss.existsSync(path))
     await fs.unlink(path)
   //Create encoder
+  const GIFEncoder = (await import("gifencoder")).default
   const encoder = new GIFEncoder(width, height)
   encoder.createWriteStream().pipe(fss.createWriteStream(path))
   encoder.start()

@@ -94,6 +94,17 @@ jobs:
           delay: 120
           user: lowlighter
           plugins_errors_fatal: yes
+      - name: 🧱 Core - Metrics insights
+        if: ${{ success() || failure() }}
+        uses: lowlighter/metrics@master
+        with:
+          filename: metrics.insights.html
+          token: ${{ secrets.METRICS_TOKEN }}
+          config_output: insights
+          output_action: none
+          delay: 120
+          user: lowlighter
+          plugins_errors_fatal: yes
       - name: 🧱 Core - Plugin error example
         uses: lowlighter/metrics@master
         with:
@@ -600,6 +611,19 @@ jobs:
           base: ""
           plugin_repositories: yes
           plugin_repositories_featured: lowlighter/metrics
+          output_action: none
+          delay: 120
+          user: lowlighter
+          plugins_errors_fatal: yes
+        if: ${{ success() || failure() }}
+      - name: 📓 Repositories - Pinned repositories
+        uses: lowlighter/metrics@master
+        with:
+          filename: metrics.plugin.repositories.pinned.svg
+          token: ${{ secrets.METRICS_TOKEN }}
+          base: ""
+          plugin_repositories: yes
+          plugin_repositories_pinned: 2
           output_action: none
           delay: 120
           user: lowlighter
