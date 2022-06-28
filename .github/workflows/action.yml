@@ -23,16 +23,15 @@ jobs:
           plugin_isocalendar_duration: half-year
           plugin_stars: yes
           plugin_stars_limit: 4
-          plugin_topics: yes
-          plugin_topics_limit: 12
+          plugin_notable: yes
           plugin_followup: yes
           plugin_followup_sections: repositories
           plugin_achievements: yes
           plugin_achievements_display: compact
-          # plugin_pagespeed: yes
-          # plugin_pagespeed_url: https://www.zigma.cc
-          # plugin_pagespeed_detailed: yes
-          # plugin_pagespeed_token: ${{ secrets.PAGESPEED_TOKEN }}
+          plugin_pagespeed: yes
+          plugin_pagespeed_url: https://www.zigma.cc
+          plugin_pagespeed_detailed: yes
+          plugin_pagespeed_token: ${{ secrets.PAGESPEED_TOKEN }}
       - uses: zigmax809/metrics@latest
         with:
           filename: metrics.plugin.wakatime.svg
