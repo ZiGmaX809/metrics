@@ -15,6 +15,7 @@ export default async function({graphql, rest}) {
   if (mocked)
     return {graphql, rest}
   mocked = true
+  process.env.METRICS_MOCKED = true
   console.debug("metrics/compute/mocks > mocking")
 
   //Load mocks
