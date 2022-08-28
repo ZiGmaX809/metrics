@@ -4,6 +4,17 @@
   <tr><th colspan="2"><h3>📜 Repository licenses</h3></th></tr>
   <tr><td colspan="2" align="center"><p>This plugin display repository license informations like permissions, limitations and conditions along with additional stats about dependencies.</p>
 </td></tr>
+  <tr><th>⚠️ Disclaimer</th><td><p>This plugin is not affiliated, associated, authorized, endorsed by, or in any way officially connected with <a href="https://github.com">GitHub</a>.
+All product and company names are trademarks™ or registered® trademarks of their respective holders.</p>
+</td></tr>
+  <tr><th>ℹ Additional notes</th><td><blockquote>
+<p>⚠️ This is <strong>NOT</strong> legal advice, use at your own risk</p>
+</blockquote>
+<blockquote>
+<p>💣 This plugin <strong>SHOULD NOT</strong> be enabled on web instances, since it allows raw command injection.
+This could result in compromised server!</p>
+</blockquote>
+</td></tr>
   <tr>
     <th rowspan="3">Supported features<br><sub><a href="metadata.yml">→ Full specification</a></sub></th>
     <td><a href="/source/templates/repository/README.md"><code>📘 Repository template</code></a></td>
@@ -58,7 +69,14 @@ Dependencies will be analyzed by [GitHub licensed](https://github.com/github/lic
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code><br>
+    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code>:
+<ul>
+<li><i>metrics.cpu.overuse</i></li>
+<li><i>metrics.run.tempdir</i></li>
+<li><i>metrics.run.git</i></li>
+<li><i>metrics.run.licensed</i></li>
+<li><i>metrics.run.user.cmd</i></li>
+</ul>
 <b>type:</b> <code>boolean</code>
 <br>
 <b>default:</b> no<br></td>
@@ -74,7 +92,7 @@ Dependencies will be analyzed by [GitHub licensed](https://github.com/github/lic
   </tr>
   <tr>
     <td nowrap="nowrap"><h4><code>plugin_licenses_ratio</code></h4></td>
-    <td rowspan="2"><p>Display used licenses ratio</p>
+    <td rowspan="2"><p>Used licenses ratio</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
@@ -84,7 +102,7 @@ Dependencies will be analyzed by [GitHub licensed](https://github.com/github/lic
   </tr>
   <tr>
     <td nowrap="nowrap"><h4><code>plugin_licenses_legal</code></h4></td>
-    <td rowspan="2"><p>Display permissions, limitations and conditions about licenses</p>
+    <td rowspan="2"><p>Permissions, limitations and conditions about used licenses</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>

@@ -7,6 +7,8 @@
       //Palette
       try {
         this.palette = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        if (localStorage.getItem("session.metrics"))
+          axios.defaults.headers.common["x-metrics-session"] = localStorage.getItem("session.metrics")
       }
       catch (error) {}
       //Embed
@@ -15,12 +17,17 @@
       this.localstorage = !!(new URLSearchParams(location.search).get("localstorage"))
       //User
       const user = location.pathname.split("/").pop()
-      if ((user) && (user !== "about")) {
+      if ((user) && (!["about", "insights"].includes(user))) {
         this.user = user
         await this.search()
       }
       else {
+        const user = new URLSearchParams(location.search).get("user")
         this.searchable = true
+        if (user) {
+          this.user = user
+          this.search()
+        }
       }
       //Init
       await Promise.all([
@@ -38,6 +45,11 @@
         (async () => {
           const {data: hosted} = await axios.get("/.hosted")
           this.hosted = hosted
+        })(),
+        //OAuth
+        (async () => {
+          const {data: enabled} = await axios.get("/.oauth/enabled")
+          this.oauth = enabled
         })(),
       ])
     },
@@ -79,7 +91,7 @@
                 (_, repo, tags) => (options?.repo === repo ? "" : repo + "@") + tags,
               ) // -> 'lowlighter/metrics@1.0...1.1'
               .replace(
-                /(?<!&)#(\d+)/g,
+                /[^&]#(\d+)/g,
                 (_, id) => `<a href="https://github.com/${options?.repo}/issues/${id}">#${id}</a>`,
               ) // -> #123
               .replace(
@@ -99,7 +111,7 @@
             this.loaded = ["base", ...Object.keys(this.metrics?.rendered?.plugins ?? {})]
             return
           }
-          const {processing, ...data} = (await axios.get(`/about/query/${this.user}`)).data
+          const {processing, ...data} = (await axios.get(`/insights/query/${this.user}`)).data
           if (processing) {
             let completed = 0
             this.progress = 1 / (data.plugins.length + 1)
@@ -109,7 +121,7 @@
                 return
               do {
                 try {
-                  const {data} = await axios.get(`/about/query/${this.user}/${plugin}`)
+                  const {data} = await axios.get(`/insights/query/${this.user}/${plugin}`)
                   if (!data)
                     throw new Error(`${plugin}: no data`)
                   if (plugin === "base")
@@ -132,6 +144,7 @@
           }
           else {
             this.metrics = data
+            this.loaded = ["base", ...Object.keys(this.metrics?.rendered?.plugins ?? {})]
           }
         }
         catch (error) {
@@ -149,6 +162,9 @@
     },
     //Computed properties
     computed: {
+      params() {
+        return new URLSearchParams({from: location.href})
+      },
       stats() {
         return this.metrics?.rendered.user ?? null
       },
@@ -219,10 +235,13 @@
         return {login, name, avatar: this.metrics?.rendered.computed.avatar, type: this.metrics?.rendered.account}
       },
       url() {
-        return `${window.location.protocol}//${window.location.host}/about/${this.user}`
+        return `${window.location.protocol}//${window.location.host}/insights/${this.user}`
       },
       preview() {
         return /-preview$/.test(this.version)
+      },
+      beta() {
+        return /-beta$/.test(this.version)
       },
       rlreset() {
         const reset = new Date(Math.max(this.requests.graphql.reset, this.requests.rest.reset))
@@ -237,10 +256,11 @@
       embed: false,
       localstorage: false,
       searchable: false,
-      requests: {rest: {limit: 0, used: 0, remaining: 0, reset: NaN}, graphql: {limit: 0, used: 0, remaining: 0, reset: NaN}},
+      requests: {rest: {limit: 0, used: 0, remaining: 0, reset: NaN}, graphql: {limit: 0, used: 0, remaining: 0, reset: NaN}, search: {limit: 0, used: 0, remaining: 0, reset: NaN}},
       palette: "light",
       metrics: null,
       pending: false,
+      oauth: false,
       error: null,
       config: {},
       progress: 0,

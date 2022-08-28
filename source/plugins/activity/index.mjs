@@ -1,9 +1,9 @@
 //Setup
-export default async function({login, data, rest, q, account, imports}, {enabled = false, markdown = "inline"} = {}) {
+export default async function({login, data, rest, q, account, imports}, {enabled = false, markdown = "inline", extras = false} = {}) {
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.activity))
+    if ((!enabled) || (!q.activity) || (!imports.metadata.plugins.activity.extras("enabled", {extras})))
       return null
 
     //Context
@@ -73,7 +73,7 @@ export default async function({login, data, rest, q, account, imports}, {enabled
               const {forkee: {full_name: forked}} = payload
               return {type: "fork", actor, timestamp, repo, forked}
             }
-            //Wiki editions
+            //Wiki changes
             case "GollumEvent": {
               const {pages} = payload
               return {type: "wiki", actor, timestamp, repo, pages: pages.map(({title}) => title)}
@@ -174,6 +174,6 @@ export default async function({login, data, rest, q, account, imports}, {enabled
   }
   //Handle errors
   catch (error) {
-    throw {error: {message: "An error occured", instance: error}}
+    throw imports.format.error(error)
   }
 }

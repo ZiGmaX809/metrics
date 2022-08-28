@@ -1,9 +1,9 @@
 //Setup
-export default async function({login, data, graphql, rest, q, queries, imports, account}, {enabled = false} = {}) {
+export default async function({login, data, graphql, rest, q, queries, imports, account}, {enabled = false, extras = false} = {}) {
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.people))
+    if ((!enabled) || (!q.people) || (!imports.metadata.plugins.people.extras("enabled", {extras})))
       return null
 
     //Context
@@ -79,7 +79,7 @@ export default async function({login, data, graphql, rest, q, queries, imports, 
         console.debug(`metrics/compute/${login}/plugins > people > keeping only ${limit} ${type}`)
         result[type].splice(limit)
       }
-      //Hide real avator with identicons if enabled
+      //Hide real avatar with identicons if enabled
       if (identicons) {
         console.debug(`metrics/compute/${login}/plugins > people > using identicons`)
         result[type].map(user => user.avatarUrl = `https://github.com/identicons/${user.login}.png`)
@@ -102,6 +102,6 @@ export default async function({login, data, graphql, rest, q, queries, imports, 
   }
   //Handle errors
   catch (error) {
-    throw {error: {message: "An error occured", instance: error}}
+    throw imports.format.error(error)
   }
 }

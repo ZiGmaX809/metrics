@@ -98,9 +98,14 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
     const {inputs, ...meta} = yaml.load(raw)
     Object.assign(metadata.inputs, inputs)
 
-    //category
+    //Category
     if (!categories.includes(meta.category))
       meta.category = "community"
+    if ((meta.category === "github") && (!meta.disclaimer))
+      meta.disclaimer = "This plugin is not affiliated, associated, authorized, endorsed by, or in any way officially connected with [GitHub](https://github.com).\nAll product and company names are trademarks™ or registered® trademarks of their respective holders."
+
+    //Deprecation
+    meta.deprecated = !!meta?.deprecation
 
     //Inputs parser
     {
@@ -111,7 +116,7 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
         if (account !== "bypass") {
           const context = q.repo ? "repository" : account
           if (!meta.supports?.includes(context))
-            throw {error: {message: `Not supported for: ${context}`, instance: new Error()}}
+            throw {error: {message: `Unsupported context ${context}`, instance: new Error()}}
         }
         //Special values replacer
         const replacer = value => {
@@ -212,6 +217,64 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
       Object.assign(meta.inputs, inputs, Object.fromEntries(Object.entries(inputs).map(([key, value]) => [metadata.to.query(key, {name}), value])))
     }
 
+    //Extra features parser
+    {
+      meta.extras = function(input, {extras = {}, error = true}) {
+        const key = metadata.to.yaml(input, {name})
+        try {
+          //Required permissions
+          const required = inputs[key]?.extras ?? null
+          if (!required)
+            return true
+          console.debug(`metrics/extras > ${name} > ${key} > require [${required}]`)
+
+          //Legacy handling
+          const enabled = Array.isArray(extras) ? extras : (extras?.features ?? extras?.default ?? (typeof extras === "boolean" ? extras : false))
+          if (typeof enabled === "boolean") {
+            console.debug(`metrics/extras > ${name} > ${key} > extras features is set to ${enabled}`)
+            if (!enabled)
+              throw new Error()
+            return enabled
+          }
+          if (!Array.isArray(required)) {
+            console.debug(`metrics/extras > ${name} > ${key} > extras is not a permission array, skipping`)
+            return false
+          }
+
+          //Legacy options handling
+          if (!Array.isArray(enabled))
+            throw new Error(`metrics/extras > ${name} > ${key} > extras.features is not an array`)
+          if (extras.css) {
+            console.warn(`metrics/extras > ${name} > ${key} > extras.css is deprecated, use extras.features with "metrics.run.puppeteer.user.css" instead`)
+            enabled.push("metrics.run.puppeteer.user.css")
+          }
+          if (extras.js) {
+            console.warn(`metrics/extras > ${name} > ${key} > extras.js is deprecated, use extras.features with "metrics.run.puppeteer.user.js" instead`)
+            enabled.push("metrics.run.puppeteer.user.js")
+          }
+          if (extras.presets) {
+            console.warn(`metrics/extras > ${name} > ${key} > extras.presets is deprecated, use extras.features with "metrics.setup.community.presets" instead`)
+            enabled.push("metrics.setup.community.presets")
+          }
+
+          //Check permissions
+          const missing = required.filter(permission => !enabled.includes(permission))
+          if (missing.length > 0) {
+            console.debug(`metrics/extras > ${name} > ${key} > missing permissions [${missing}]`)
+            throw new Error()
+          }
+          return true
+        }
+        catch {
+          if (!error) {
+            console.debug(`metrics/extras > ${name} > ${key} > skipping (no error mode)`)
+            return false
+          }
+          throw Object.assign(new Error(`Unsupported option "${key}"`), {extras: true})
+        }
+      }
+    }
+
     //Action metadata
     {
       //Extract comments
@@ -285,30 +348,30 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
     //Web metadata
     {
       meta.web = Object.fromEntries(
-        Object.entries(inputs).map(([key, {type, description: text, example, default: defaulted, min = 0, max = 9999, values}]) => [
+        Object.entries(inputs).map(([key, {type, description: text, example, default: defaulted, min = 0, max = 9999, values, extras}]) => [
           //Format key
           metadata.to.query(key),
           //Value descriptor
           (() => {
             switch (type) {
               case "boolean":
-                return {text, type: "boolean", defaulted: /^(?:[Tt]rue|[Oo]n|[Yy]es|1)$/.test(defaulted) ? true : /^(?:[Ff]alse|[Oo]ff|[Nn]o|0)$/.test(defaulted) ? false : defaulted}
+                return {text, type: "boolean", defaulted: /^(?:[Tt]rue|[Oo]n|[Yy]es|1)$/.test(defaulted) ? true : /^(?:[Ff]alse|[Oo]ff|[Nn]o|0)$/.test(defaulted) ? false : defaulted, extras}
               case "number":
-                return {text, type: "number", min, max, defaulted}
+                return {text, type: "number", min, max, defaulted, extras}
               case "array":
-                return {text, type: "text", placeholder: example ?? defaulted, defaulted}
+                return {text, type: "text", placeholder: example ?? defaulted, defaulted, extras}
               case "string": {
                 if (Array.isArray(values))
                   return {text, type: "select", values, defaulted}
-                return {text, type: "text", placeholder: example ?? defaulted, defaulted}
+                return {text, type: "text", placeholder: example ?? defaulted, defaulted, extras}
               }
               case "json":
-                return {text, type: "text", placeholder: example ?? defaulted, defaulted}
+                return {text, type: "text", placeholder: example ?? defaulted, defaulted, extras}
               default:
                 return null
             }
           })(),
-        ]).filter(([key, value]) => (value) && (key !== name)),
+        ]).filter(([key, value]) => (value) && (!((name === "base") && (key === "repositories")))),
       )
     }
 
@@ -338,6 +401,9 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
         '  <tr><td colspan="2"><a href="/README.md#-plugins">← Back to plugins index</a></td></tr>',
         `  <tr><th colspan="2"><h3>${meta.name}</h3></th></tr>`,
         `  <tr><td colspan="2" align="center">${marked.parse(meta.description ?? "", {silent: true})}</td></tr>`,
+        meta.deprecation ? `  <tr><th>⚠️ Deprecated</th><td>${marked.parse(meta.deprecation ?? "", {silent: true})}</td></tr>` : "",
+        meta.disclaimer ? `  <tr><th>⚠️ Disclaimer</th><td>${marked.parse(meta.disclaimer ?? "", {silent: true})}</td></tr>` : "",
+        meta.notes ? `  <tr><th>ℹ Additional notes</th><td>${marked.parse(meta.notes ?? "", {silent: true})}</td></tr>` : "",
         meta.authors?.length ? `<tr><th>Authors</th><td>${[meta.authors].flat().map(author => `<a href="https://github.com/${author}">@${author}</a>`)}</td></tr>` : "",
         "  <tr>",
         '    <th rowspan="3">Supported features<br><sub><a href="metadata.yml">→ Full specification</a></sub></th>',
@@ -389,8 +455,13 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
             cell.push("🔧 For development<br>")
           if (!Object.keys(previous?.inputs ?? {}).includes(option))
             cell.push("✨ On <code>master</code>/<code>main</code><br>")
-          if (o.extras)
-            cell.push("🌐 Web instances must configure <code>settings.json</code><br>")
+          if (o.extras) {
+            cell.push("🌐 Web instances must configure <code>settings.json</code>:")
+            cell.push("<ul>")
+            for (const permission of o.extras)
+              cell.push(`<li><i>${permission}</i></li>`)
+            cell.push("</ul>")
+          }
           cell.push(`<b>type:</b> <code>${type}</code>`)
           if ("format" in o)
             cell.push(`<i>(${Array.isArray(o.format) ? o.format[0] : o.format})</i>`)
@@ -411,6 +482,8 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
               text = "<code>→ User attached twitter</code>"
             if (o.default === ".user.website")
               text = "<code>→ User attached website</code>"
+            if (type === "json")
+              text = `<details><summary>→ Click to expand</summary><pre language="json"><code>${text}</code></pre></details>`
             cell.push(`<b>default:</b> ${text}<br>`)
           }
           if ("values" in o)
@@ -537,6 +610,14 @@ metadata.to = {
   query(key, {name = null} = {}) {
     key = key.replace(/^plugin_/, "").replace(/_/g, ".")
     return name ? key.replace(new RegExp(`^(${name}.)`, "g"), "") : key
+  },
+  yaml(key, {name = ""} = {}) {
+    const parts = []
+    if (key !== "enabled")
+      parts.unshift(key.replaceAll(".", "_"))
+    if (name)
+      parts.unshift((name === "base") ? name : `plugin_${name}`)
+    return parts.join("_")
   },
 }
 

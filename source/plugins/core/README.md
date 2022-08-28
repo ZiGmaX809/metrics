@@ -55,7 +55,7 @@ Content can be manually ordered using `config_order` option.
 > 💡 Omitted sections will be appended at the end using default order
 
 > ℹ️ The handles to use for each plugin and sections is based on the [`partials/_.json`](/source/templates/classic/partials/_.json) of the template.
-> It may not necessarly be the plugin id (e.g. `base.header`, `base.activity+community`, `base.repositories`, etc.).
+> It may not necessarily be the plugin id (e.g. `base.header`, `base.activity+community`, `base.repositories`, etc.).
 
 ## 🪛 Using presets
 
@@ -74,7 +74,7 @@ Options resolution is done in the following order:
     config_presets: https://raw.githubusercontent.com/lowlighter/metrics/presets/lunar-red/preset.yaml
 ```
 
-Some presets are hosted on this repository on the [`@presets`](https://github.com/lowlighter/metrics/tree/presets) branch and can be used directly by using using their identifier prefixed by an arobase (`@`).
+Some presets are hosted on this repository on the [`@presets`](https://github.com/lowlighter/metrics/tree/presets) branch and can be used directly by using their identifier prefixed by an arobase (`@`).
 
 *Example: using a pre-defined configuration preset*
 ```yaml
@@ -122,7 +122,7 @@ Additional JavaScript can be injected using `extras_js` option.
 ```
 
 > ℹ️ JavaScript is executed in puppeteer context during the rendering phase, **not** in *metrics* context.
-> It will be possible to access `document` and all other features accessibles like if the SVG was opened in a browser page
+> It will be possible to access `document` and all other features accessible like if the SVG was opened in a browser page
 
 > 💡 If you make an heavy use of this option, creating a [community templates](/source/templates/community/README.md) may be a better alternative
 
@@ -304,7 +304,7 @@ metrics:
 
 ### Manual handling
 
-Use `config_ouput: none` to perform custom processing with outputs.
+Use `config_output: none` to perform custom processing with outputs.
 They will be available under `/metrics_renders/{filename}` in the runner.
 
 *Example: generate outputs and manually push them*
@@ -336,7 +336,7 @@ metrics:
 
 ## ♻️ Retrying automatically failed rendering and output action
 
-Rendering is subject to external factors and can fail ocassionaly.
+Rendering is subject to external factors and can fail occasionally.
 Use `retries` and `retries_delay` options to automatically retry rendering.
 
 *Example: retry render up to 3 times (wait 5 minutes between each fail)*
@@ -347,7 +347,7 @@ Use `retries` and `retries_delay` options to automatically retry rendering.
     retries_delay: 300
 ```
 
-Output action is also subject to GitHub API rate-limiting and overall health status and can fail ocassionaly.
+Output action is also subject to GitHub API rate-limiting and overall health status and can fail occasionally.
 Use `retries_output_action` and `retries_delay_output_action` options to automatically retry output action.
 
 > 💡 As output action is a separate step from rendering, render step won't be called again
@@ -362,7 +362,7 @@ Use `retries_output_action` and `retries_delay_output_action` options to automat
 
 ## 🗜️ Optimize SVG output
 
-To reduce filesize and decrease loading time, *metrics* offers several optimization options, such as purging unused CSS and style minification, XML pretty-pretting (which also reduce diffs between changes) and general SVG optimation (still experimental).
+To reduce filesize and decrease loading time, *metrics* offers several optimization options, such as purging unused CSS and style minification, XML pretty-printing (which also reduce diffs between changes) and general SVG optimization (still experimental).
 
 > 💡 This option is enabled by default!
 
@@ -406,10 +406,9 @@ On forks, this feature is disable to take into account any changes you made on i
   <tr>
     <td nowrap="nowrap"><h4><code>token</code></h4></td>
     <td rowspan="2"><p>GitHub Personal Access Token</p>
-<p>No scopes are required by default, though some plugins and features may require additional scopes</p>
-<p>When using a configuration which does not requires a GitHub PAT, you may pass <code>NOT_NEEDED</code> instead.
-Note that when doing so, all defaults values using <code>.user.*</code> will not be applicable meaning that they need to be filled manually.
-Most of the time <code>user</code> option must also be set.</p>
+<p>No scopes are required by default, though some plugins and features may require additional scopes.</p>
+<p>When using a configuration which does not requires a GitHub PAT, it is possible to pass <code>NOT_NEEDED</code> instead.
+When doing so, any settings which defaults on user fetched values will not be templated (e.g. <code>.user.*</code>) and will usually need to be set manually.</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
@@ -432,7 +431,7 @@ Most of the time <code>user</code> option must also be set.</p>
   <tr>
     <td nowrap="nowrap"><h4><code>repo</code></h4></td>
     <td rowspan="2"><p>GitHub repository</p>
-<p>This option is revevalant only for repositories templates</p>
+<p>This option is only revelant for repositories templates</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
@@ -458,7 +457,7 @@ Most of the time <code>user</code> option must also be set.</p>
   <tr>
     <td nowrap="nowrap"><h4><code>committer_branch</code></h4></td>
     <td rowspan="2"><p>Target branch</p>
-<p>Default value is set to your repository default branch</p>
+<p>Defaults to current repository default branch</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
@@ -526,9 +525,9 @@ Most of the time <code>user</code> option must also be set.</p>
 <li><code>none</code>: just create file in <code>/metrics_renders</code> directory of action runner</li>
 <li><code>commit</code>: push output to <code>committer_branch</code></li>
 <li><code>pull-request</code>: push output to a new branch and open a pull request to <code>committer_branch</code></li>
-<li><code>pull-request-merge</code>: same as <code>pull-request</code> and additionaly merge pull request</li>
-<li><code>pull-request-squash</code>: same as <code>pull-request</code> and additionaly squash and merge pull request</li>
-<li><code>pull-request-rebase</code>: same as <code>pull-request</code> and additionaly rebase and merge pull request</li>
+<li><code>pull-request-merge</code>: same as <code>pull-request</code> and additionally merge pull request</li>
+<li><code>pull-request-squash</code>: same as <code>pull-request</code> and additionally squash and merge pull request</li>
+<li><code>pull-request-rebase</code>: same as <code>pull-request</code> and additionally rebase and merge pull request</li>
 <li><code>gist</code>: push output to <code>committer_gist</code></li>
 </ul>
 <blockquote>
@@ -582,7 +581,10 @@ Most of the time <code>user</code> option must also be set.</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code><br>
+    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code>:
+<ul>
+<li><i>metrics.setup.community.templates</i></li>
+</ul>
 <b>type:</b> <code>array</code>
 <i>(comma-separated)</i>
 <br></td>
@@ -612,7 +614,7 @@ This is mostly useful for custom templates.</p>
   <tr>
     <td nowrap="nowrap"><b>type:</b> <code>json</code>
 <br>
-<b>default:</b> {}<br></td>
+<b>default:</b> <details><summary>→ Click to expand</summary><pre language="json"><code>{}</code></pre></details><br></td>
   </tr>
   <tr>
     <td nowrap="nowrap"><h4><code>extras_css</code></h4></td>
@@ -622,7 +624,10 @@ Useful to avoid creating a new template just to tweak some styling</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code><br>
+    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code>:
+<ul>
+<li><i>metrics.run.puppeteer.user.css</i></li>
+</ul>
 <b>type:</b> <code>string</code>
 <br></td>
   </tr>
@@ -636,7 +641,36 @@ It is run after transformations and optimizations, but just before resizing.</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code><br>
+    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code>:
+<ul>
+<li><i>metrics.run.puppeteer.user.js</i></li>
+</ul>
+<b>type:</b> <code>string</code>
+<br></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap"><h4><code>github_api_rest</code></h4></td>
+    <td rowspan="2"><p>GitHub REST API endpoint</p>
+<p>Can be used to support <a href="https://github.com/enterprise">GitHub enterprises server</a>.
+Leave empty to use default endpoint.</p>
+<img width="900" height="1" alt=""></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap">⏭️ Global option<br>
+✨ On <code>master</code>/<code>main</code><br>
+<b>type:</b> <code>string</code>
+<br></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap"><h4><code>github_api_graphql</code></h4></td>
+    <td rowspan="2"><p>GitHub GraphQL API endpoint</p>
+<p>Can be used to support <a href="https://github.com/enterprise">GitHub enterprises server</a>.
+Leave empty to use default endpoint.</p>
+<img width="900" height="1" alt=""></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap">⏭️ Global option<br>
+✨ On <code>master</code>/<code>main</code><br>
 <b>type:</b> <code>string</code>
 <br></td>
   </tr>
@@ -744,7 +778,7 @@ Size must be a supported icon size (12, 16 or 24).
   <tr>
     <td nowrap="nowrap"><h4><code>config_base64</code></h4></td>
     <td rowspan="2"><p>Base64-encoded images</p>
-<p>Enable this option to make self-contained ouput (i.e. with no external links)</p>
+<p>Enable this option to make self-contained output (i.e. with no external links)</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
@@ -805,6 +839,10 @@ It can result in cropped or oversized outputs.</p>
   </tr>
   <tr>
     <td nowrap="nowrap">⏯️ Cannot be preset<br>
+🌐 Web instances must configure <code>settings.json</code>:
+<ul>
+<li><i>metrics.setup.community.presets</i></li>
+</ul>
 <b>type:</b> <code>array</code>
 <i>(comma-separated)</i>
 <br></td>
@@ -996,6 +1034,10 @@ This option has no effects on forks (images will always be rebuilt from Dockerfi
   <tr>
     <td nowrap="nowrap">⏯️ Cannot be preset<br>
 🔧 For development<br>
+🌐 Web instances must configure <code>settings.json</code>:
+<ul>
+<li><i>metrics.npm.optional.libxml2</i></li>
+</ul>
 <b>type:</b> <code>boolean</code>
 <br>
 <b>default:</b> no<br></td>

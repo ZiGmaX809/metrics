@@ -1,18 +1,19 @@
 //Setup
-export default async function({login, graphql, data, imports, q, queries, account}, {enabled = false} = {}) {
+export default async function({login, graphql, data, imports, q, queries, account}, {enabled = false, extras = false, "worldmap.token": _worldmap_token} = {}) {
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.stargazers))
+    if ((!enabled) || (!q.stargazers) || (!imports.metadata.plugins.stargazers.extras("enabled", {extras})))
       return null
 
     //Load inputs
-    let {"charts.type": _charts} = imports.metadata.plugins.stargazers.inputs({data, account, q})
+    let {charts: _charts, "charts.type": _charts_type, worldmap: _worldmap, "worldmap.sample": _worldmap_sample} = imports.metadata.plugins.stargazers.inputs({data, account, q})
 
     //Retrieve stargazers from graphql api
     console.debug(`metrics/compute/${login}/plugins > stargazers > querying api`)
     const repositories = data.user.repositories.nodes.map(({name: repository, owner: {login: owner}}) => ({repository, owner})) ?? []
     const dates = []
+    const locations = []
     for (const {repository, owner} of repositories) {
       //Iterate through stargazers
       console.debug(`metrics/compute/${login}/plugins > stargazers > retrieving stargazers of ${repository}`)
@@ -20,12 +21,13 @@ export default async function({login, graphql, data, imports, q, queries, accoun
       let pushed = 0
       do {
         console.debug(`metrics/compute/${login}/plugins > stargazers > retrieving stargazers of ${repository} after ${cursor}`)
-        const {repository: {stargazers: {edges}}} = await graphql(queries.stargazers({login: owner, repository, after: cursor ? `after: "${cursor}"` : ""}))
+        const {repository: {stargazers: {edges}}} = await graphql(queries.stargazers({login: owner, repository, after: cursor ? `after: "${cursor}"` : "", location: _worldmap ? "node { location }" : ""}))
         cursor = edges?.[edges?.length - 1]?.cursor
         dates.push(...edges.map(({starredAt}) => new Date(starredAt)))
+        if (_worldmap)
+          locations.push(...edges.map(({node: {location}}) => location))
         pushed = edges.length
       } while ((pushed) && (cursor))
-      //Limit repositories
       console.debug(`metrics/compute/${login}/plugins > stargazers > loaded ${dates.length} stargazers for ${repository}`)
     }
     console.debug(`metrics/compute/${login}/plugins > stargazers > loaded ${dates.length} stargazers in total`)
@@ -58,8 +60,8 @@ export default async function({login, graphql, data, imports, q, queries, accoun
     const months = ["", "Jan.", "Feb.", "Mar.", "Apr.", "May", "June", "July", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."]
 
     //Generating charts
-    let charts = null
-    if (_charts === "chartist") {
+    let charts = _charts ? true : null
+    if ((_charts_type === "chartist") && (imports.metadata.plugins.stargazers.extras("charts.type", {extras}))) {
       console.debug(`metrics/compute/${login}/plugins > stargazers > generating charts`)
       charts = await Promise.all([{data: total, low: total.min, high: total.max}, {data: increments, ref: 0, low: increments.min, high: increments.max, sign: true}].map(({data: {dates: set}, high, low, ref, sign = false}) =>
         imports.chartist("line", {
@@ -95,11 +97,18 @@ export default async function({login, graphql, data, imports, q, queries, accoun
       }})(${imports.format.toString()})`)
     }
 
+    //Generating worldmap
+    let worldmap = null
+    if ((_worldmap) && (imports.metadata.plugins.stargazers.extras("worldmap", {extras}))) {
+      const {default: generate} = await import("./worldmap/index.mjs")
+      worldmap = await generate(login, {locations, imports, token: _worldmap_token, sample: _worldmap_sample})
+    }
+
     //Results
-    return {total, increments, months, charts}
+    return {total, increments, months, charts, worldmap}
   }
   //Handle errors
   catch (error) {
-    throw {error: {message: "An error occured", instance: error}}
+    throw imports.format.error(error)
   }
 }

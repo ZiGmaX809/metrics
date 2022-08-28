@@ -167,8 +167,17 @@
         ...(set.plugins.enabled.lines
           ? ({
             lines: {
-              added: `${faker.datatype.number(100)}.${faker.datatype.number(9)}k`,
-              deleted: `${faker.datatype.number(100)}.${faker.datatype.number(9)}k`,
+              added: faker.datatype.number(1000000),
+              deleted: faker.datatype.number(1000000),
+              changed: faker.datatype.number(1000000),
+              sections: options["lines.sections"].split(",").map(x => x.trim()),
+              repos: new Array(options["lines.repositories.limit"] || 4).fill(null).map(_ => ({
+                handle: `${faker.random.word()}/${faker.random.word()}`,
+                added: faker.datatype.number(10000),
+                deleted: faker.datatype.number(10000),
+                changed: faker.datatype.number(10000),
+              })),
+              history: await staticPlaceholder(set.plugins.enabled.lines, "lines.history.svg"),
             },
           })
           : null),
@@ -706,15 +715,28 @@
                 name: faker.lorem.sentence(),
                 description: faker.lorem.paragraph(),
                 updated: `${2 + faker.datatype.number(8)} days ago`,
-                progress: {
-                  enabled: true,
-                  todo: faker.datatype.number(50),
-                  doing: faker.datatype.number(50),
-                  done: faker.datatype.number(50),
-                  get total() {
-                    return this.todo + this.doing + this.done
-                  },
-                },
+                ...(faker.datatype.boolean()
+                  ? {
+                    items: new Array(faker.datatype.number(4)).fill(null).map(() => ({type: faker.helpers.arrayElement(["DRAFT_ISSUE", "ISSUE", "PULL_REQUEST", "REDACTED"]), text: faker.lorem.sentence()})),
+                    progress: {
+                      enabled: false,
+                      todo: NaN,
+                      doing: NaN,
+                      done: NaN,
+                      total: faker.datatype.number(100),
+                    },
+                  }
+                  : {
+                    progress: {
+                      enabled: true,
+                      todo: faker.datatype.number(50),
+                      doing: faker.datatype.number(50),
+                      done: faker.datatype.number(50),
+                      get total() {
+                        return this.todo + this.doing + this.done
+                      },
+                    },
+                  }),
               })),
             },
           })
@@ -860,10 +882,14 @@
         //Stargazers
         ...(set.plugins.enabled.stargazers
           ? ({
+            __stargazers: {
+              worldmap: await staticPlaceholder(options["stargazers.worldmap"], "stargazers.worldmap.svg"),
+            },
             get stargazers() {
               const dates = []
               let total = faker.datatype.number(1000)
               const result = {
+                worldmap: this.__stargazers.worldmap,
                 total: {
                   dates: {},
                   get max() {

@@ -1,17 +1,17 @@
 //Setup
-export default async function({login, q, imports, data, account}, {enabled = false, token} = {}) {
+export default async function({login, q, imports, data, account}, {enabled = false, extras = false, token} = {}) {
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.stock))
+    if ((!enabled) || (!q.stock) || (!imports.metadata.plugins.stock.extras("enabled", {extras})))
       return null
 
     //Load inputs
     let {symbol, interval, duration} = imports.metadata.plugins.stock.inputs({data, account, q})
     if (!token)
-      throw {error: {message: "A token is required"}}
+      throw {error: {message: "API token is not set"}}
     if (!symbol)
-      throw {error: {message: "A company stock symbol is required"}}
+      throw {error: {message: "Company stock symbol is not set"}}
     symbol = symbol.toLocaleUpperCase()
 
     //Query API for company informations
@@ -21,7 +21,7 @@ export default async function({login, q, imports, data, account}, {enabled = fal
       headers: {"x-rapidapi-key": token},
     })
 
-    //Query API for sotck charts
+    //Query API for stock charts
     console.debug(`metrics/compute/${login}/plugins > stock > querying api for stock`)
     const {data: {chart: {result: [{meta, timestamp, indicators: {quote: [{close}]}}]}}} = await imports.axios.get("https://yh-finance.p.rapidapi.com/stock/v2/get-chart", {
       params: {interval, symbol, range: duration, region: "US"},
@@ -48,13 +48,6 @@ export default async function({login, q, imports, data, account}, {enabled = fal
   }
   //Handle errors
   catch (error) {
-    let message = "An error occured"
-    if (error.isAxiosError) {
-      const status = error.response?.status
-      const description = error.response?.data?.message ?? null
-      message = `API returned ${status}${description ? ` (${description})` : ""}`
-      error = error.response?.data ?? null
-    }
-    throw {error: {message, instance: error}}
+    throw imports.format.error(error)
   }
 }

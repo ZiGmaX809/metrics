@@ -24,8 +24,6 @@ export default async function metrics({login, q}, {graphql, rest, plugins, conf,
     //Initialization
     const pending = []
     const {queries} = conf
-    const extras = {css: (conf.settings.extras?.css ?? conf.settings.extras?.default) ? q["extras.css"] ?? "" : "", js: (conf.settings.extras?.js ?? conf.settings.extras?.default) ? q["extras.js"] ?? "" : ""}
-    const data = {q, animated: true, large: false, base: {}, config: {}, errors: [], plugins: {}, computed: {}, extras, postscripts: []}
     const imports = {
       plugins: Plugins,
       templates: Templates,
@@ -40,6 +38,8 @@ export default async function metrics({login, q}, {graphql, rest, plugins, conf,
         }
         : null),
     }
+    const extras = {css: imports.metadata.plugins.core.extras("extras_css", {...conf.settings, error: false}) ? q["extras.css"] ?? "" : "", js: imports.metadata.plugins.core.extras("extras_js", {...conf.settings, error: false}) ? q["extras.js"] ?? "" : ""}
+    const data = {q, animated: true, large: false, base: {}, config: {}, errors: [], plugins: {}, computed: {}, extras, postscripts: []}
     const experimental = new Set(decodeURIComponent(q["experimental.features"] ?? "").split(" ").map(x => x.trim().toLocaleLowerCase()).filter(x => x))
     if (conf.settings["debug.headless"])
       imports.puppeteer.headless = false
@@ -68,7 +68,7 @@ export default async function metrics({login, q}, {graphql, rest, plugins, conf,
     if (errors.length) {
       console.debug(`metrics/compute/${login} > ${errors.length} errors !`)
       if (die)
-        throw new Error("An error occured during rendering, dying")
+        throw new Error("An error occurred during rendering, dying")
       else
         console.debug(util.inspect(errors, {depth: Infinity, maxStringLength: 256}))
     }
@@ -117,7 +117,7 @@ export default async function metrics({login, q}, {graphql, rest, plugins, conf,
         console.debug(`metrics/compute/${login}/embed > ${name} >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`)
         if ((!name) || (typeof q !== "object") || (q === null)) {
           if (die)
-            throw new Error("An error occured during embed rendering, dying")
+            throw new Error("An error occurred during embed rendering, dying")
           return "<p>⚠️ Failed to execute embed function: invalid arguments</p>"
         }
         console.debug(`metrics/compute/${login} > embed called with`)
@@ -142,7 +142,7 @@ export default async function metrics({login, q}, {graphql, rest, plugins, conf,
         //Compute rendering
         const {rendered} = await metrics({login, q}, {...arguments[1], convert: ["svg", "png", "jpeg"].includes(q["config.output"]) ? q["config.output"] : null}, arguments[2])
         console.debug(`metrics/compute/${login}/embed > ${name} > success >>>>>>>>>>>>>>>>>>>>>>`)
-        return `<img class="metrics-cachable" data-name="${name}" src="data:image/${{png: "png", jpeg: "jpeg"}[q["config.output"]] ?? "svg+xml"};base64,${Buffer.from(rendered).toString("base64")}">`
+        return `<img class="metrics-cacheable" data-name="${name}" src="data:image/${{png: "png", jpeg: "jpeg"}[q["config.output"]] ?? "svg+xml"};base64,${Buffer.from(rendered).toString("base64")}">`
       }
       //Rendering template source
       let rendered = source.replace(/\{\{ (?<content>[\s\S]*?) \}\}/g, "{%= $<content> %}")
@@ -184,13 +184,21 @@ export default async function metrics({login, q}, {graphql, rest, plugins, conf,
     if ((conf.settings?.optimize === true) || (conf.settings?.optimize?.includes?.("svg")))
       rendered = await imports.svg.optimize.svg(rendered, q, experimental)
     //Verify svg
-    if (verify) {
+    if ((verify) && (imports.metadata.plugins.core.extras("verify", {...conf.settings, error: false}))) {
       console.debug(`metrics/compute/${login} > verify SVG`)
-      const libxmljs = (await import("libxmljs2")).default
-      const parsed = libxmljs.parseXml(rendered)
-      if (parsed.errors.length)
-        throw new Error(`Malformed SVG : \n${parsed.errors.join("\n")}`)
-      console.debug(`metrics/compute/${login} > verified SVG, no parsing errors found`)
+      let libxmljs = null
+      try {
+        libxmljs = (await import("libxmljs2")).default
+      }
+      catch (error) {
+        console.debug(`metrics/compute/${login} > failed to import libxmljs2 (${error}), ignoring SVG verification`)
+      }
+      if (!libxmljs) {
+        const parsed = libxmljs.parseXml(rendered)
+        if (parsed.errors.length)
+          throw new Error(`Malformed SVG : \n${parsed.errors.join("\n")}`)
+        console.debug(`metrics/compute/${login} > verified SVG, no parsing errors found`)
+      }
     }
     //Resizing
     const {resized, mime} = await imports.svg.resize(rendered, {paddings: q["config.padding"] || conf.settings.padding, convert: convert === "svg" ? null : convert, scripts: [...data.postscripts, extras.js || null].filter(x => x)})
@@ -273,9 +281,9 @@ metrics.insights.output = async function({login, imports, conf}, {graphql, rest,
   console.debug(`metrics/compute/${login} > insights > generating data`)
   const result = await metrics.insights({login}, {graphql, rest, conf}, {Plugins, Templates})
   const json = JSON.stringify(result)
-  await page.goto(`${server}/about/${login}?embed=1&localstorage=1`)
+  await page.goto(`${server}/insights/${login}?embed=1&localstorage=1`)
   await page.evaluate(async json => localStorage.setItem("local.metrics", json), json) //eslint-disable-line no-undef
-  await page.goto(`${server}/about/${login}?embed=1&localstorage=1`)
+  await page.goto(`${server}/insights/${login}?embed=1&localstorage=1`)
   await page.waitForSelector(".container .user", {timeout: 10 * 60 * 1000})
 
   //Rendering
@@ -289,7 +297,7 @@ metrics.insights.output = async function({login, imports, conf}, {graphql, rest,
       </head>
       <body>
         ${await page.evaluate(() => document.querySelector("main").outerHTML)}
-        ${(await Promise.all([".css/style.vars.css", ".css/style.css", "about/.statics/style.css"].map(path => utils.axios.get(`${server}/${path}`)))).map(({data: style}) => `<style>${style}</style>`).join("\n")}
+        ${(await Promise.all([".css/style.vars.css", ".css/style.css", "insights/.statics/style.css"].map(path => utils.axios.get(`${server}/${path}`)))).map(({data: style}) => `<style>${style}</style>`).join("\n")}
       </body>
     </html>`
   await browser.close()

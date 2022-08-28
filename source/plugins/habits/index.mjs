@@ -6,11 +6,12 @@ export default async function({login, data, rest, imports, q, account}, {enabled
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.habits))
+    if ((!enabled) || (!q.habits) || (!imports.metadata.plugins.habits.extras("enabled", {extras})))
       return null
 
     //Load inputs
-    let {from, days, facts, charts, "charts.type": _charts, trim, "languages.limit": limit} = imports.metadata.plugins.habits.inputs({data, account, q}, defaults)
+    let {from, days, facts, charts, "charts.type": _charts, trim, "languages.limit": limit, "languages.threshold": threshold} = imports.metadata.plugins.habits.inputs({data, account, q}, defaults)
+    threshold = (Number(threshold.replace(/%$/, "")) || 0) / 100
 
     //Initialization
     const habits = {facts, charts, trim, lines: {average: {chars: 0}}, commits: {fetched: 0, hour: NaN, hours: {}, day: NaN, days: {}}, indents: {style: "", spaces: 0, tabs: 0}, linguist: {available: false, ordered: [], languages: {}}}
@@ -63,7 +64,7 @@ export default async function({login, data, rest, imports, q, account}, {enabled
         habits.commits.days[day] = (habits.commits.days[day] ?? 0) + 1
       habits.commits.days.max = Math.max(...Object.values(habits.commits.days))
       //Compute day with most commits
-      habits.commits.day = days.length ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][Object.entries(habits.commits.days).sort(([_an, a], [_bn, b]) => b - a).map(([day, _occurence]) => day)[0]] ?? NaN : NaN
+      habits.commits.day = days.length ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][Object.entries(habits.commits.days).sort(([_an, a], [_bn, b]) => b - a).map(([day, _occurrence]) => day)[0]] ?? NaN : NaN
     }
 
     //Commit hour
@@ -75,7 +76,7 @@ export default async function({login, data, rest, imports, q, account}, {enabled
         habits.commits.hours[hour] = (habits.commits.hours[hour] ?? 0) + 1
       habits.commits.hours.max = Math.max(...Object.values(habits.commits.hours))
       //Compute hour with most commits
-      habits.commits.hour = hours.length ? `${Object.entries(habits.commits.hours).sort(([_an, a], [_bn, b]) => b - a).map(([hour, _occurence]) => hour)[0]}`.padStart(2, "0") : NaN
+      habits.commits.hour = hours.length ? `${Object.entries(habits.commits.hours).sort(([_an, a], [_bn, b]) => b - a).map(([hour, _occurrence]) => hour)[0]}`.padStart(2, "0") : NaN
     }
 
     //Indent style
@@ -97,7 +98,7 @@ export default async function({login, data, rest, imports, q, account}, {enabled
     }
 
     //Linguist
-    if ((extras) && (charts)) {
+    if ((charts) && (imports.metadata.plugins.habits.extras("charts", {extras, error: false}))) {
       //Check if linguist exists
       console.debug(`metrics/compute/${login}/plugins > habits > searching recently used languages using linguist`)
       if (patches.length) {
@@ -105,7 +106,7 @@ export default async function({login, data, rest, imports, q, account}, {enabled
         habits.linguist.available = true
         const {total, stats} = await recent_analyzer({login, data, imports, rest, account}, {days, load: from || 1000, tempdir: "habits"})
         habits.linguist.languages = Object.fromEntries(Object.entries(stats).map(([language, value]) => [language, value / total]))
-        habits.linguist.ordered = Object.entries(habits.linguist.languages).sort(([_an, a], [_bn, b]) => b - a).slice(0, limit || Infinity)
+        habits.linguist.ordered = Object.entries(habits.linguist.languages).sort(([_an, a], [_bn, b]) => b - a).filter(([_, value]) => value > threshold).slice(0, limit || Infinity)
       }
       else {
         console.debug(`metrics/compute/${login}/plugins > habits > linguist not available`)
@@ -113,7 +114,7 @@ export default async function({login, data, rest, imports, q, account}, {enabled
     }
 
     //Generating charts with chartist
-    if (_charts === "chartist") {
+    if ((_charts === "chartist") && (imports.metadata.plugins.habits.extras("charts.type", {extras}))) {
       console.debug(`metrics/compute/${login}/plugins > habits > generating charts`)
       habits.charts = await Promise.all([
         {type: "line", data: {...empty(24), ...Object.fromEntries(Object.entries(habits.commits.hours).filter(([k]) => !Number.isNaN(+k)))}, low: 0, high: habits.commits.hours.max},
@@ -164,9 +165,7 @@ export default async function({login, data, rest, imports, q, account}, {enabled
   }
   //Handle errors
   catch (error) {
-    if (error.error?.message)
-      throw error
-    throw {error: {message: "An error occured", instance: error}}
+    throw imports.format.error(error)
   }
 }
 

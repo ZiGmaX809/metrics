@@ -4,6 +4,8 @@ import axios from "axios"
 import processes from "child_process"
 import crypto from "crypto"
 import { minify as csso } from "csso"
+import * as d3 from "d3"
+import D3node from "d3-node"
 import emoji from "emoji-name-map"
 import { fileTypeFromBuffer } from "file-type"
 import fss from "fs"
@@ -11,7 +13,6 @@ import fs from "fs/promises"
 import linguist from "linguist-js"
 import { marked } from "marked"
 import minimatch from "minimatch"
-import nodechartist from "node-chartist"
 import fetch from "node-fetch"
 import opengraph from "open-graph-scraper"
 import os from "os"
@@ -34,7 +35,7 @@ import xmlformat from "xml-formatter"
 prism_lang()
 
 //Exports
-export { axios, emoji, fetch, fs, git, minimatch, opengraph, os, paths, processes, rss, sharp, url, util }
+export { axios, d3, D3node, emoji, fetch, fs, git, minimatch, opengraph, os, paths, processes, rss, sharp, url, util }
 
 /**Returns module __dirname */
 export function __module(module) {
@@ -126,6 +127,49 @@ export function formatters({timeZone} = {}) {
     return license.nickname ?? license.spdxId ?? license.name
   }
 
+  /**Error formatter */
+  format.error = function(error, {descriptions = {}, ...attributes} = {}) {
+    try {
+      //Extras features error
+      if (error.extras)
+        throw {error: {message: error.message, instance: error}}
+      //Already formatted error
+      if (error.error?.message)
+        throw error
+      //Custom description
+      let message = "Unexpected error"
+      if (descriptions.custom) {
+        const description = descriptions.custom(error)
+        if (description)
+          message += ` (${description})`
+      }
+      //Axios error
+      if (error.isAxiosError) {
+        //Error code
+        const status = error.response?.status
+        message = `API error: ${status}`
+
+        //Error description (optional)
+        if ((descriptions) && (descriptions[status]))
+          message += ` (${descriptions[status]})`
+        else {
+          const description = error.response?.data?.errors?.[0]?.message ?? error.response.data?.error_description ?? error.response?.data?.message ?? null
+          if (description)
+            message += ` (${description})`
+        }
+
+        //Error data
+        console.debug(error.response.data)
+        error = error.response?.data ?? null
+        throw {error: {message, instance: error}}
+      }
+      throw {error: {message, instance: error}}
+    }
+    catch (error) {
+      return Object.assign(error, attributes)
+    }
+  }
+
   return {format}
 }
 
@@ -166,6 +210,7 @@ export function stripemojis(string) {
 /**Chartist */
 export async function chartist() {
   const css = `<style data-optimizable="true">${await fs.readFile(paths.join(__module(import.meta.url), "../../../node_modules", "node-chartist/dist/main.css")).catch(_ => "")}</style>`
+  const {default: nodechartist} = await import(url.pathToFileURL(paths.join(__module(import.meta.url), "../../../node_modules", "/node-chartist/lib/index.js")))
   return (await nodechartist(...arguments))
     .replace(/class="ct-chart-line">/, `class="ct-chart-line">${css}`)
 }
@@ -224,7 +269,7 @@ export async function spawn(command, args = [], options = {}, {prefixed = true, 
   })
 }
 
-/**Check command existance */
+/**Check command existence */
 export async function which(command) {
   try {
     console.debug(`metrics/command > checking existence of ${command}`)
@@ -237,7 +282,7 @@ export async function which(command) {
   return false
 }
 
-/**Code hightlighter */
+/**Code highlighter */
 export function highlight(code, lang) {
   return lang in prism.languages ? prism.highlight(code, prism.languages[lang]) : code
 }
@@ -434,7 +479,7 @@ export const svg = {
               console.debug("metrics/svg/resize > successfully executed user javascript")
             }
             catch (error) {
-              console.debug(`an error occured while evaluating script: ${error}`)
+              console.debug(`an error occurred while evaluating script: ${error}`)
             }
           }
           //Disable animations
@@ -465,7 +510,7 @@ export const svg = {
       ))
     }
     catch (error) {
-      console.debug(`metrics/svg/resize > an error occured: ${error}`)
+      console.debug(`metrics/svg/resize > an error occurred: ${error}`)
       throw error
     }
     //Convert if required
