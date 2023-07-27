@@ -3,7 +3,7 @@ export default async function({login, data, queries, imports, q, account}, {enab
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.anilist) || (!imports.metadata.plugins.anilist.extras("enabled", {extras})))
+    if ((!q.anilist) || (!imports.metadata.plugins.anilist.enabled(enabled, {extras})))
       return null
 
     //Load inputs
@@ -74,7 +74,8 @@ export default async function({login, data, queries, imports, q, account}, {enab
             if (await retry({login, imports, error}))
               continue
           }
-        } while (next)
+        }
+        while (next)
         //Format and save results
         result.lists[type].favorites = shuffle ? imports.shuffle(list) : list
         //Limit results
@@ -107,7 +108,8 @@ export default async function({login, data, queries, imports, q, account}, {enab
           if (await retry({login, imports, error}))
             continue
         }
-      } while (next)
+      }
+      while (next)
       //Format and save results
       result.characters = shuffle ? imports.shuffle(characters) : characters
       //Limit results

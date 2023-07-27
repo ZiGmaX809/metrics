@@ -3,7 +3,7 @@ export default async function({login, imports, data, rest, q, account}, {enabled
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.traffic) || (!imports.metadata.plugins.traffic.extras("enabled", {extras})))
+    if ((!q.traffic) || (!imports.metadata.plugins.traffic.enabled(enabled, {extras})))
       return null
 
     //Load inputs
@@ -16,7 +16,19 @@ export default async function({login, imports, data, rest, q, account}, {enabled
     //Get views stats from repositories
     console.debug(`metrics/compute/${login}/plugins > traffic > querying api`)
     const views = {count: 0, uniques: 0}
-    const response = [...await Promise.allSettled(repositories.map(({repo, owner}) => (skipped.includes(repo.toLocaleLowerCase())) || (skipped.includes(`${owner}/${repo}`.toLocaleLowerCase())) ? {} : rest.repos.getViews({owner, repo})))].filter(({status}) => status === "fulfilled").map(({value}) => value)
+    const promised = [...await Promise.allSettled(repositories.map(({repo, owner}) => imports.filters.repo(`${owner}/${repo}`, skipped) ? rest.repos.getViews({owner, repo}) : {}))]
+    const response = promised.filter(({status}) => status === "fulfilled").map(({value}) => value)
+
+    //Handle error if all promises were rejected
+    const rejected = promised.filter(({status}) => status === "rejected")
+    if (rejected.length === promised.length) {
+      if (promised.map(({reason}) => reason.message).every(error => /must have push access to repository/i.test(error)))
+        throw {error: {message: "Insufficient token scopes"}}
+      throw new Error(promised[0].reason.message)
+    }
+    else if (rejected.length) {
+      rejected.map(({reason}) => console.debug(`metrics/compute/${login}/plugins > traffic > warn > ${reason.message}`))
+    }
 
     //Compute views
     console.debug(`metrics/compute/${login}/plugins > traffic > computing stats`)

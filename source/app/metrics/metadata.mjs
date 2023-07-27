@@ -139,7 +139,7 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
             //Format value
             (defaulted => {
               //Default value
-              let value = q[metadata.to.query(key)] ?? q[key] ?? defaulted
+              let value = (meta.category !== "core" ? q[`plugin.${metadata.to.query(key)}`] : null) ?? q[metadata.to.query(key)] ?? q[key] ?? defaulted
               //Apply type conversion
               switch (type) {
                 //Booleans
@@ -170,9 +170,25 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
                     logger(`metrics/inputs > failed to decode uri : ${value}`)
                     value = defaulted
                   }
-                  const separators = {"comma-separated": ",", "space-separated": " "}
-                  const separator = separators[[format].flat().filter(s => s in separators)[0]] ?? ","
-                  return value.split(separator).map(v => replacer(v).toLocaleLowerCase()).filter(v => Array.isArray(values) ? values.includes(v) : true).filter(v => v)
+                  const separators = {"comma-separated": ",", "space-separated": " ", "newline-separated": "\n"}
+                  const formats = [format, "comma-separated"].flat(Infinity).filter(s => s in separators)
+                  let parsed = [], used = "comma-separated"
+                  for (const separation of formats) {
+                    parsed = value
+                      .split(separators[separation])
+                      .map(v => replacer(v).toLocaleLowerCase())
+                      .filter(v => Array.isArray(values) ? values.includes(v) : true)
+                      .filter(v => v)
+                    //Conditional below serves as auto-detection when multiple formats are provided
+                    //To force a specific format one should use the separator as the first character
+                    //so that the parsed.length is greater than 1 (empty values are filtered anyways)
+                    if (parsed.length > 1) {
+                      used = separation
+                      break
+                    }
+                  }
+                  logger(`metrics/inputs > used ${used} format to decode ${value}`)
+                  return parsed
                 }
                 //String
                 case "string": {
@@ -217,9 +233,20 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
       Object.assign(meta.inputs, inputs, Object.fromEntries(Object.entries(inputs).map(([key, value]) => [metadata.to.query(key, {name}), value])))
     }
 
+    //Enable state handler
+    {
+      meta.enabled = function(enabled, {extras = {}, error = true} = {}) {
+        if ((process.env.GITHUB_ACTIONS) && (!enabled))
+          console.warn(`::warning::Plugin "${name}" is currently disabled. Add "plugin_${name}: yes" to your workflow to enable it.`)
+        if ((error) && (!enabled))
+          throw Object.assign(new Error(`Plugin "${name}" is disabled${process.env.GITHUB_ACTIONS ? "" : " on this server"}`), {enabled: true})
+        return (enabled) && (meta.extras("enabled", {extras, error}))
+      }
+    }
+
     //Extra features parser
     {
-      meta.extras = function(input, {extras = {}, error = true}) {
+      meta.extras = function(input, {extras = {}, error = true} = {}) {
         const key = metadata.to.yaml(input, {name})
         try {
           //Required permissions
@@ -270,7 +297,7 @@ metadata.plugin = async function({__plugins, __templates, name, logger}) {
             console.debug(`metrics/extras > ${name} > ${key} > skipping (no error mode)`)
             return false
           }
-          throw Object.assign(new Error(`Unsupported option "${key}"`), {extras: true})
+          throw Object.assign(new Error(`Option "${key}" is disabled on this server`), {extras: true})
         }
       }
     }
@@ -614,7 +641,7 @@ metadata.to = {
   yaml(key, {name = ""} = {}) {
     const parts = []
     if (key !== "enabled")
-      parts.unshift(key.replaceAll(".", "_"))
+      parts.unshift(key.replace(/\./g, "_"))
     if (name)
       parts.unshift((name === "base") ? name : `plugin_${name}`)
     return parts.join("_")

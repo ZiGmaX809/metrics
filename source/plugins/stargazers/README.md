@@ -20,7 +20,7 @@ All product and company names are trademarks™ or registered® trademarks of th
   <tr>
     <td colspan="2" align="center">
       <details open><summary>Classic charts</summary><img src="https://github.com/lowlighter/metrics/blob/examples/metrics.plugin.stargazers.svg" alt=""></img></details>
-      <details><summary>Chartist charts</summary><img src="https://github.com/lowlighter/metrics/blob/examples/metrics.plugin.stargazers.chartist.svg" alt=""></img></details>
+      <details><summary>Graph charts</summary><img src="https://github.com/lowlighter/metrics/blob/examples/metrics.plugin.stargazers.graph.svg" alt=""></img></details>
       <details open><summary>Worldmap</summary><img src="https://github.com/lowlighter/metrics/blob/examples/metrics.plugin.stargazers.worldmap.svg" alt=""></img></details>
       <img width="900" height="1" alt="">
     </td>
@@ -57,14 +57,27 @@ Follow instructions from their [documentation](https://developers.google.com/map
 <b>default:</b> no<br></td>
   </tr>
   <tr>
+    <td nowrap="nowrap"><h4><code>plugin_stargazers_days</code></h4></td>
+    <td rowspan="2"><p>Time range</p>
+<p>If set to <code>0</code> the account registration date will be used.</p>
+<img width="900" height="1" alt=""></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap"><b>type:</b> <code>number</code>
+<i>(0 ≤
+𝑥)</i>
+<br>
+<b>zero behaviour:</b> see description</br>
+<b>default:</b> 14<br></td>
+  </tr>
+  <tr>
     <td nowrap="nowrap"><h4><code>plugin_stargazers_charts</code></h4></td>
     <td rowspan="2"><p>Charts</p>
 <p>It includes total number of stargazers evolution, along with the number of new stars per day over the last two weeks.</p>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">✨ On <code>master</code>/<code>main</code><br>
-<b>type:</b> <code>boolean</code>
+    <td nowrap="nowrap"><b>type:</b> <code>boolean</code>
 <br>
 <b>default:</b> yes<br></td>
   </tr>
@@ -73,19 +86,22 @@ Follow instructions from their [documentation](https://developers.google.com/map
     <td rowspan="2"><p>Charts display type</p>
 <ul>
 <li><code>classic</code>: <code>&lt;div&gt;</code> based charts, simple and lightweight</li>
-<li><code>chartist</code>: <code>&lt;svg&gt;</code> based charts, smooth</li>
+<li><code>graph</code>: <code>&lt;svg&gt;</code> based charts, smooth</li>
 </ul>
+<blockquote>
+<p>⚠️ <code>chartist</code> option has been deprecated and is now equivalent to <code>graph</code></p>
+</blockquote>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
     <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code>:
 <ul>
-<li><i>metrics.npm.optional.chartist</i></li>
+<li><i>metrics.npm.optional.d3</i></li>
 </ul>
 <b>type:</b> <code>string</code>
 <br>
 <b>default:</b> classic<br>
-<b>allowed values:</b><ul><li>classic</li><li>chartist</li></ul></td>
+<b>allowed values:</b><ul><li>classic</li><li>graph</li><li>chartist</li></ul></td>
   </tr>
   <tr>
     <td nowrap="nowrap"><h4><code>plugin_stargazers_worldmap</code></h4></td>
@@ -93,8 +109,7 @@ Follow instructions from their [documentation](https://developers.google.com/map
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">✨ On <code>master</code>/<code>main</code><br>
-🌐 Web instances must configure <code>settings.json</code>:
+    <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code>:
 <ul>
 <li><i>metrics.api.google.maps</i></li>
 <li><i>metrics.npm.optional.d3</i></li>
@@ -110,7 +125,6 @@ Follow instructions from their [documentation](https://developers.google.com/map
   </tr>
   <tr>
     <td nowrap="nowrap">🔐 Token<br>
-✨ On <code>master</code>/<code>main</code><br>
 <b>type:</b> <code>token</code>
 <br></td>
   </tr>
@@ -122,8 +136,7 @@ Helps to avoid consuming too much Google Geocoding API requests while still bein
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">✨ On <code>master</code>/<code>main</code><br>
-<b>type:</b> <code>number</code>
+    <td nowrap="nowrap"><b>type:</b> <code>number</code>
 <i>(0 ≤
 𝑥)</i>
 <br>
@@ -147,14 +160,14 @@ with:
 
 ```
 ```yaml
-name: Using chartist charts
+name: Using graph charts
 uses: lowlighter/metrics@latest
 with:
-  filename: metrics.plugin.stargazers.chartist.svg
+  filename: metrics.plugin.stargazers.graph.svg
   token: ${{ secrets.METRICS_TOKEN }}
   base: ""
   plugin_stargazers: yes
-  plugin_stargazers_charts_type: chartist
+  plugin_stargazers_charts_type: graph
 
 ```
 ```yaml

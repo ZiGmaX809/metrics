@@ -59,6 +59,17 @@ All product and company names are trademarks™ or registered® trademarks of th
 <b>default:</b> 200<br></td>
   </tr>
   <tr>
+    <td nowrap="nowrap"><h4><code>plugin_habits_skipped</code></h4></td>
+    <td rowspan="2"><p>Skipped repositories</p>
+<img width="900" height="1" alt=""></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap">⏩ Inherits <code>repositories_skipped</code><br>
+<b>type:</b> <code>array</code>
+<i>(newline-separated)</i>
+<br></td>
+  </tr>
+  <tr>
     <td nowrap="nowrap"><h4><code>plugin_habits_days</code></h4></td>
     <td rowspan="2"><p>Event maximum age</p>
 <img width="900" height="1" alt=""></td>
@@ -105,19 +116,22 @@ Recent language activity may also displayed (it requires extras features to be e
     <td rowspan="2"><p>Charts display type</p>
 <ul>
 <li><code>classic</code>: <code>&lt;div&gt;</code> based charts, simple and lightweight</li>
-<li><code>chartist</code>: <code>&lt;svg&gt;</code> based charts, smooth</li>
+<li><code>graph</code>: <code>&lt;svg&gt;</code> based charts, smooth</li>
 </ul>
+<blockquote>
+<p>⚠️ <code>chartist</code> option has been deprecated and is now equivalent to <code>graph</code></p>
+</blockquote>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
     <td nowrap="nowrap">🌐 Web instances must configure <code>settings.json</code>:
 <ul>
-<li><i>metrics.npm.optional.chartist</i></li>
+<li><i>metrics.npm.optional.d3</i></li>
 </ul>
 <b>type:</b> <code>string</code>
 <br>
 <b>default:</b> classic<br>
-<b>allowed values:</b><ul><li>classic</li><li>chartist</li></ul></td>
+<b>allowed values:</b><ul><li>classic</li><li>graph</li><li>chartist</li></ul></td>
   </tr>
   <tr>
     <td nowrap="nowrap"><h4><code>plugin_habits_trim</code></h4></td>
@@ -149,8 +163,7 @@ Recent language activity may also displayed (it requires extras features to be e
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">✨ On <code>master</code>/<code>main</code><br>
-<b>type:</b> <code>string</code>
+    <td nowrap="nowrap"><b>type:</b> <code>string</code>
 <br>
 <b>default:</b> 0%<br></td>
   </tr>

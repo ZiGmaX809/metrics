@@ -3,7 +3,7 @@ export default async function({login, data, graphql, q, imports, queries, accoun
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.gists) || (!imports.metadata.plugins.gists.extras("enabled", {extras})))
+    if ((!q.gists) || (!imports.metadata.plugins.gists.enabled(enabled, {extras})))
       return null
 
     //Load inputs
@@ -22,7 +22,8 @@ export default async function({login, data, graphql, q, imports, queries, accoun
         gists.push(...nodes)
         gists.totalCount = totalCount
         pushed = nodes.length
-      } while ((pushed) && (cursor))
+      }
+      while ((pushed) && (cursor))
       console.debug(`metrics/compute/${login}/plugins > gists > loaded ${gists.length} gists`)
     }
 

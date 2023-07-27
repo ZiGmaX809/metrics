@@ -52,7 +52,7 @@ All product and company names are trademarks™ or registered® trademarks of th
   <tr>
     <td nowrap="nowrap">⏩ Inherits <code>repositories_skipped</code><br>
 <b>type:</b> <code>array</code>
-<i>(comma-separated)</i>
+<i>(newline-separated)</i>
 <br></td>
   </tr>
   <tr>
@@ -63,11 +63,13 @@ All product and company names are trademarks™ or registered® trademarks of th
 <li><code>repositories</code> will display repositories with the most lines added and removed</li>
 <li><code>history</code> will display a graph displaying lines added and removed over time</li>
 </ul>
+<blockquote>
+<p>ℹ️ <code>base</code> requires at least <a href="/source/plugins/base/README.md#base"><code>base: repositories</code></a> to be set</p>
+</blockquote>
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">✨ On <code>master</code>/<code>main</code><br>
-<b>type:</b> <code>array</code>
+    <td nowrap="nowrap"><b>type:</b> <code>array</code>
 <i>(comma-separated)</i>
 <br>
 <b>default:</b> base<br>
@@ -79,8 +81,7 @@ All product and company names are trademarks™ or registered® trademarks of th
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">✨ On <code>master</code>/<code>main</code><br>
-<b>type:</b> <code>number</code>
+    <td nowrap="nowrap"><b>type:</b> <code>number</code>
 <i>(0 ≤
 𝑥)</i>
 <br>
@@ -93,8 +94,7 @@ All product and company names are trademarks™ or registered® trademarks of th
 <img width="900" height="1" alt=""></td>
   </tr>
   <tr>
-    <td nowrap="nowrap">✨ On <code>master</code>/<code>main</code><br>
-<b>type:</b> <code>number</code>
+    <td nowrap="nowrap"><b>type:</b> <code>number</code>
 <br>
 <b>zero behaviour:</b> disable</br>
 <b>default:</b> 1<br></td>
@@ -126,6 +126,10 @@ with:
   plugin_lines_sections: repositories, history
   plugin_lines_repositories_limit: 2
   plugin_lines_history_limit: 1
+  repositories_skipped: |
+    @use.patterns
+    */*
+    +lowlighter/metrics
 
 ```
 <!--/examples-->

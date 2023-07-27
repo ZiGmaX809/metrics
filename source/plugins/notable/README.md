@@ -65,7 +65,7 @@ Some repositories may not be able to reported advanced stats and in the case the
   <tr>
     <td nowrap="nowrap">⏩ Inherits <code>repositories_skipped</code><br>
 <b>type:</b> <code>array</code>
-<i>(comma-separated)</i>
+<i>(newline-separated)</i>
 <br></td>
   </tr>
   <tr>
@@ -126,6 +126,16 @@ Some repositories may not be able to reported advanced stats and in the case the
 <br>
 <b>default:</b> commit<br>
 <b>allowed values:</b><ul><li>commit</li><li>pull_request</li><li>issue</li></ul></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap"><h4><code>plugin_notable_self</code></h4></td>
+    <td rowspan="2"><p>Include own repositories</p>
+<img width="900" height="1" alt=""></td>
+  </tr>
+  <tr>
+    <td nowrap="nowrap"><b>type:</b> <code>boolean</code>
+<br>
+<b>default:</b> no<br></td>
   </tr>
 </table>
 <!--/options-->

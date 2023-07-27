@@ -3,7 +3,7 @@ export default async function({login, q, imports, data, rest, graphql, queries, 
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.contributors) || (!imports.metadata.plugins.contributors.extras("enabled", {extras})))
+    if ((!q.contributors) || (!imports.metadata.plugins.contributors.enabled(enabled, {extras})))
       return null
 
     //Load inputs
@@ -51,7 +51,7 @@ export default async function({login, q, imports, data, rest, graphql, queries, 
     //Compute contributors and contributions
     let contributors = {}
     for (const {author: {login, avatar_url: avatar}, commit: {message = "", author: {email = ""} = {}}} of commits) {
-      if ((!login) || (ignored.includes(login)) || (ignored.includes(email))) {
+      if ((!login) || (!imports.filters.text(login, ignored)) || (!imports.filters.text(email, ignored))) {
         console.debug(`metrics/compute/${login}/plugins > contributors > ignored contributor "${login}"`)
         continue
       }

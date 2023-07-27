@@ -3,13 +3,13 @@ export default async function({login, data, imports, q, account}, {enabled = fal
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.topics) || (!imports.metadata.plugins.topics.extras("enabled", {extras})))
+    if ((!q.topics) || (!imports.metadata.plugins.topics.enabled(enabled, {extras})))
       return null
 
     //Load inputs
     let {sort, mode, limit} = imports.metadata.plugins.topics.inputs({data, account, q})
     const type = {starred: "labels", labels: "labels", mastered: "icons", icons: "icons"}[mode]
-    const shuffle = (sort === "random")
+    const shuffle = sort === "random"
 
     //Start puppeteer and navigate to topics
     console.debug(`metrics/compute/${login}/plugins > topics > searching starred topics`)

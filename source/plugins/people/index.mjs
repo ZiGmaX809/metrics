@@ -3,7 +3,7 @@ export default async function({login, data, graphql, rest, q, queries, imports, 
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.people) || (!imports.metadata.plugins.people.extras("enabled", {extras})))
+    if ((!q.people) || (!imports.metadata.plugins.people.enabled(enabled, {extras})))
       return null
 
     //Context
@@ -52,17 +52,16 @@ export default async function({login, data, graphql, rest, q, queries, imports, 
         let pushed = 0
         do {
           console.debug(`metrics/compute/${login}/plugins > people > retrieving ${type} after ${cursor}`)
-          const {[type]: {edges}} = (
-            type in context.sponsorships
-              ? (await graphql(queries.people.sponsors({login: context.owner ?? login, type, size, after: cursor ? `after: "${cursor}"` : "", target: context.sponsorships[type], account})))[account]
-              : context.mode === "repository"
-              ? (await graphql(queries.people.repository({login: context.owner, repository: context.repo, type, size, after: cursor ? `after: "${cursor}"` : "", account})))[account].repository
-              : (await graphql(queries.people({login, type, size, after: cursor ? `after: "${cursor}"` : "", account})))[account]
-          )
+          const {[type]: {edges}} = type in context.sponsorships
+            ? (await graphql(queries.people.sponsors({login: context.owner ?? login, type, size, after: cursor ? `after: "${cursor}"` : "", target: context.sponsorships[type], account})))[account]
+            : context.mode === "repository"
+            ? (await graphql(queries.people.repository({login: context.owner, repository: context.repo, type, size, after: cursor ? `after: "${cursor}"` : "", account})))[account].repository
+            : (await graphql(queries.people({login, type, size, after: cursor ? `after: "${cursor}"` : "", account})))[account]
           cursor = edges?.[edges?.length - 1]?.cursor
           result[type].push(...edges.map(({node}) => node[context.sponsorships[type]] ?? node))
           pushed = edges.length
-        } while ((pushed) && (cursor) && ((limit === 0) || (result[type].length <= (shuffle ? 10 * limit : limit))))
+        }
+        while ((pushed) && (cursor) && ((limit === 0) || (result[type].length <= (shuffle ? 10 * limit : limit))))
       }
       //Shuffle
       if (shuffle) {

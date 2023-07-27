@@ -9,9 +9,9 @@
     elements.push(["", {readme:{demo:`<td align="center"><img width="900" height="1" alt=""></td>`}}])
   for (let i = 0; i < elements.length; i+=2) {
     const cells = [["even", elements[i]], ["odd", elements[i+1]]]
-    for (const [cell, [plugin, {name, readme}]] of cells) {
+    for (const [cell, [plugin, {name, readme, authors}]] of cells) {
       if (cell === "even") { %>  <tr><% } %>
-    <th><% if (plugin) { %><a href="/source/plugins/community/<%= plugin %>/README.md"><%= name -%></a><% } %></th><%
+    <th><% if (plugin) { %><a href="/source/plugins/community/<%= plugin %>/README.md"><%= name -%></a><br><sup>by <%- authors.map(author => `<a href="https://github.com/${author}">@${author}</a>`).join(" ") %></sup><% } %></th><%
     if (cell === "odd") { %>
   </tr>
 <% }}
@@ -226,7 +226,7 @@ export default async function(
     //Plugin execution
     try {
       //Check if plugin is enabled and requirements are met
-      if ((!enabled)||(!q.my_plugin))
+      if ((!q.my_plugin)||(imports.metadata.plugins.my_plugin.enabled(enabled, {extras})))
         return null
 
       //Automatically validate user inputs

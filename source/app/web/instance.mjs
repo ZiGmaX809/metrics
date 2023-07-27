@@ -164,7 +164,7 @@ export default async function({sandbox = false} = {}) {
   app.get("/.js/faker.min.js", limiter, (req, res) => res.set({"Content-Type": "text/javascript"}).send("import {faker} from '/.js/faker/index.mjs';globalThis.faker=faker;globalThis.placeholder.init(globalThis)"))
   app.use("/.js/faker", express.static(`${conf.paths.node_modules}/@faker-js/faker/dist/esm`))
   app.get("/.js/axios.min.js", limiter, (req, res) => res.sendFile(`${conf.paths.node_modules}/axios/dist/axios.min.js`))
-  app.get("/.js/axios.min.map", limiter, (req, res) => res.sendFile(`${conf.paths.node_modules}/axios/dist/axios.min.map`))
+  app.get("/.js/axios.min.js.map", limiter, (req, res) => res.sendFile(`${conf.paths.node_modules}/axios/dist/axios.min.js.map`))
   app.get("/.js/vue.min.js", limiter, (req, res) => res.sendFile(`${conf.paths.node_modules}/vue/dist/vue.min.js`))
   app.get("/.js/vue.prism.min.js", limiter, (req, res) => res.sendFile(`${conf.paths.node_modules}/vue-prism-component/dist/vue-prism-component.min.js`))
   app.get("/.js/vue-prism-component.min.js.map", limiter, (req, res) => res.sendFile(`${conf.paths.node_modules}/vue-prism-component/dist/vue-prism-component.min.js.map`))
@@ -176,11 +176,21 @@ export default async function({sandbox = false} = {}) {
   app.get("/.version", limiter, (req, res) => res.status(200).send(conf.package.version))
   app.get("/.requests", limiter, async (req, res) => {
     try {
-      const custom = uapi(req.headers["x-metrics-session"])
+      const session = req.headers["x-metrics-session"]
+      const custom = uapi(session)
       if (custom) {
-        const {data: {resources}} = await custom.rest.rateLimit.get()
-        if (resources)
-          return res.status(200).json({rest: resources.core, graphql: resources.graphql, search: resources.search, login: custom.login})
+        try {
+          const {data: {resources}} = await custom.rest.rateLimit.get()
+          if (resources)
+            return res.status(200).json({rest: resources.core, graphql: resources.graphql, search: resources.search, login: custom.login})
+        }
+        catch (error) {
+          if (error.status === 401) {
+            console.debug(`metrics/app/oauth > session ${session.substring(0, 6)} is not valid anymore, removing it from cache`)
+            authenticated.delete(session)
+          }
+          throw error
+        }
       }
     }
     catch {} //eslint-disable-line no-empty

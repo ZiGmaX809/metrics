@@ -3,11 +3,11 @@ export default async function({login, q, imports, rest, graphql, data, account, 
   //Plugin execution
   try {
     //Check if plugin is enabled and requirements are met
-    if ((!enabled) || (!q.notable) || (!imports.metadata.plugins.notable.extras("enabled", {extras})))
+    if ((!q.notable) || (!imports.metadata.plugins.notable.enabled(enabled, {extras})))
       return null
 
     //Load inputs
-    let {filter, skipped, repositories, types, from, indepth} = imports.metadata.plugins.notable.inputs({data, account, q})
+    let {filter, skipped, repositories, types, from, indepth, self} = imports.metadata.plugins.notable.inputs({data, account, q})
     skipped.push(...data.shared["repositories.skipped"])
 
     //Iterate through contributed repositories
@@ -17,15 +17,16 @@ export default async function({login, q, imports, rest, graphql, data, account, 
       let pushed = 0
       do {
         console.debug(`metrics/compute/${login}/plugins > notable > retrieving contributed repositories after ${cursor}`)
-        const {user: {repositoriesContributedTo: {edges}}} = await graphql(queries.notable.contributions({login, types: types.map(x => x.toLocaleUpperCase()).join(", "), after: cursor ? `after: "${cursor}"` : "", repositories: data.shared["repositories.batch"] || 100}))
+        const {user: {repositoriesContributedTo: {edges}}} = await graphql(queries.notable.contributions({login, types: types.map(x => x.toLocaleUpperCase()).join(", "), after: cursor ? `after: "${cursor}"` : "", self, repositories: data.shared["repositories.batch"] || 100}))
         cursor = edges?.[edges?.length - 1]?.cursor
         edges
-          .filter(({node}) => !((skipped.includes(node.nameWithOwner.toLocaleLowerCase())) || (skipped.includes(node.nameWithOwner.split("/")[1].toLocaleLowerCase()))))
+          .filter(({node}) => imports.filters.repo(node, skipped))
           .filter(({node}) => ({all: true, organization: node.isInOrganization, user: !node.isInOrganization}[from]))
-          .filter(({node}) => imports.ghfilter(filter, {name: node.nameWithOwner, user: node.owner.login, stars: node.stargazers.totalCount, watchers: node.watchers.totalCount, forks: node.forks.totalCount}))
+          .filter(({node}) => imports.filters.github(filter, {name: node.nameWithOwner, user: node.owner.login, stars: node.stargazers.totalCount, watchers: node.watchers.totalCount, forks: node.forks.totalCount}))
           .map(({node}) => contributions.push({handle: node.nameWithOwner, stars: node.stargazers.totalCount, issues: node.issues.totalCount, pulls: node.pullRequests.totalCount, organization: node.isInOrganization, avatarUrl: node.owner.avatarUrl}))
         pushed = edges.length
-      } while ((pushed) && (cursor))
+      }
+      while ((pushed) && (cursor))
     }
 
     //Set contributions
@@ -47,7 +48,8 @@ export default async function({login, q, imports, rest, graphql, data, account, 
           cursor = edges?.[edges?.length - 1]?.cursor
           edges.map(({node: {repository: {nameWithOwner: repository}}}) => issues[repository] = (issues[repositories] ?? 0) + 1)
           pushed = edges.length
-        } while ((pushed) && (cursor))
+        }
+        while ((pushed) && (cursor))
       }
 
       //Fetch pull requests
@@ -61,7 +63,8 @@ export default async function({login, q, imports, rest, graphql, data, account, 
           cursor = edges?.[edges?.length - 1]?.cursor
           edges.map(({node: {repository: {nameWithOwner: repository}}}) => pulls[repository] = (pulls[repositories] ?? 0) + 1)
           pushed = edges.length
-        } while ((pushed) && (cursor))
+        }
+        while ((pushed) && (cursor))
       }
 
       //Fetch commits
@@ -80,7 +83,7 @@ export default async function({login, q, imports, rest, graphql, data, account, 
 
           //Count total commits of user
           const {data: contributions = []} = await rest.repos.getContributorsStats({owner, repo})
-          const commits = contributions.filter(({author}) => author.login.toLocaleLowerCase() === login.toLocaleLowerCase()).reduce((a, {total: b}) => a + b, 0)
+          const commits = contributions?.filter(({author}) => author.login.toLocaleLowerCase() === login.toLocaleLowerCase()).reduce((a, {total: b}) => a + b, 0) ?? NaN
 
           //Save user data
           contribution.user = {
@@ -129,7 +132,7 @@ export default async function({login, q, imports, rest, graphql, data, account, 
       //Normalize contribution percentage
       contributions.map(aggregate => aggregate.user ? aggregate.user.percentage /= aggregate.aggregated : null)
       //Additional filtering (no user commits means that API wasn't able to answer back, considering it as matching by default)
-      contributions = contributions.filter(({handle, user}) => !user?.commits ? true : imports.ghfilter(filter, {handle, commits: contributions.history, "commits.user": user.commits, "commits.user%": user.percentage * 100, maintainer: user.maintainer}))
+      contributions = contributions.filter(({handle, user}) => !user?.commits ? true : imports.filters.github(filter, {handle, commits: contributions.history, "commits.user": user.commits, "commits.user%": user.percentage * 100, maintainer: user.maintainer}))
       //Sort contribution by maintainer first and then by contribution percentage
       contributions = contributions.sort((a, b) => ((b.user?.percentage + b.user?.maintainer) || 0) - ((a.user?.percentage + a.user?.maintainer) || 0))
     }
